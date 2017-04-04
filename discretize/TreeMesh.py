@@ -1356,8 +1356,50 @@ class TreeMesh(BaseTensorMesh, InnerProducts, TreeMeshIO):
                     J += [face + off]
                     V += [pm]
 
-            D = sp.csr_matrix((V,(I,J)), shape=(self.nC, self.ntF))
-            R = self._deflationMatrix('F',asOnes=True)
+            self.__faceDivStencilFull = sp.csr_matrix(
+                (V, (I, J)), shape=(self.nC, self.ntF)
+            )
+
+        return self.__faceDivStencilFull
+
+    @property
+    def _faceDivStencil(self):
+        """
+        Deflated Face Div Stencil
+        This is not used to build any differential operators, but is leveraged
+        by regularization
+
+        .. todo::
+            Consider if it is worth caching this
+
+        """
+        R = self._deflationMatrix('F', asOnes=True)
+        return self._faceDivStencilFull * R
+
+    @property
+    def _faceDivxStencil(self):
+        # more efficient to form full faceDiv then grab components when working
+        # with multiple components
+        # print(self._faceDivyStencil.shape, self.nFx, self.vnF)
+        return self._faceDivStencil[:, :self.nFx]
+
+    @property
+    def _faceDivyStencil(self):
+        # more efficient to form full faceDiv then grab components when working
+        # with multiple components
+        return self._faceDivStencil[:, self.nFx:self.vnF[:2].sum()]
+
+    @property
+    def _faceDivzStencil(self):
+        # more efficient to form full faceDiv then grab components when working
+        # with multiple components
+        return self._faceDivStencil[:, self.vnF[:2].sum():]
+
+    @property
+    def faceDiv(self):
+        if getattr(self, '_faceDiv', None) is None:
+            D = self._faceDivStencilFull
+            R = self._deflationMatrix('F', asOnes=True)
             VOL = self.vol
             if self.dim == 2:
                 S = np.r_[self._areaFxFull, self._areaFyFull]
@@ -1365,6 +1407,24 @@ class TreeMesh(BaseTensorMesh, InnerProducts, TreeMeshIO):
                 S = np.r_[self._areaFxFull, self._areaFyFull, self._areaFzFull]
             self._faceDiv = utils.sdiag(1.0/VOL)*D*utils.sdiag(S)*R
         return self._faceDiv
+
+    @property
+    def faceDivx(self):
+        # more efficient to form full faceDiv then grab components when working
+        # with multiple components
+        return self.faceDiv[:, :self.nFx]
+
+    @property
+    def faceDivy(self):
+        # more efficient to form full faceDiv then grab components when working
+        # with multiple components
+        return self.faceDiv[:, self.nFx:self.vnF[:2].sum()]
+
+    @property
+    def faceDivz(self):
+        # more efficient to form full faceDiv then grab components when working
+        # with multiple components
+        return self.faceDiv[:, self.vnF[:2].sum():]
 
     @property
     def edgeCurl(self):
@@ -1636,6 +1696,9 @@ class TreeMesh(BaseTensorMesh, InnerProducts, TreeMeshIO):
         if getattr(self, '_aveFx2CC', None) is None:
             I, J, V = [], [], []
             PM = [1./2.]*self.dim # 0.5, 0.5
+
+            if getattr(self, '_fx2i', None) is None:
+                self._numberFaces(force=True)
 
             for ii, ind in enumerate(self._sortedCells):
                 p = self._pointer(ind)
@@ -2372,3 +2435,15 @@ def SortGrid(grid, offset=0):
             return mycmp(self.obj, other.obj) != 0
 
     return sorted(list(range(offset, grid.shape[0]+offset)), key=K)
+
+
+class TreeException(Exception):
+    pass
+
+
+class NotBalancedException(TreeException):
+    pass
+
+
+class CellLookUpException(TreeException):
+    pass
