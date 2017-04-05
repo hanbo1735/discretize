@@ -1356,6 +1356,58 @@ class TreeMesh(BaseTensorMesh, InnerProducts, TreeMeshIO):
                     J += [face + off]
                     V += [pm]
 
+            D = sp.csr_matrix((V,(I,J)), shape=(self.nC, self.ntF))
+            R = self._deflationMatrix('F',asOnes=True)
+            VOL = self.vol
+            if self.dim == 2:
+                S = np.r_[self._areaFxFull, self._areaFyFull]
+            elif self.dim == 3:
+                S = np.r_[self._areaFxFull, self._areaFyFull, self._areaFzFull]
+            self._faceDiv = utils.sdiag(1.0/VOL)*D*utils.sdiag(S)*R
+        return self._faceDiv
+
+    @property
+    def _faceDivStencilFull(self):
+        """
+        Face divergence stencil, including hanging faces
+        """
+        if getattr(self, '__faceDivStencilFull', None) is None:
+            self.number()
+
+            # TODO: Preallocate!
+            I, J, V = [], [], []
+            PM = [-1, 1]*self.dim  # plus / minus
+
+            # TODO total number of faces?
+            offset = [0]*2 + [self.ntFx]*2 + [self.ntFx+self.ntFy]*2
+
+            for ii, ind in enumerate(self._sortedCells):
+
+                p = self._pointer(ind)
+                w = self._levelWidth(p[-1])
+
+                if self.dim == 2:
+                    faces = [
+                        self._fx2i[self._index([ p[0]    , p[1]    , p[2]])],
+                        self._fx2i[self._index([ p[0] + w, p[1]    , p[2]])],
+                        self._fy2i[self._index([ p[0]    , p[1]    , p[2]])],
+                        self._fy2i[self._index([ p[0]    , p[1] + w, p[2]])]
+                    ]
+                elif self.dim == 3:
+                    faces = [
+                        self._fx2i[self._index([ p[0]    , p[1]    , p[2]    , p[3]])],
+                        self._fx2i[self._index([ p[0] + w, p[1]    , p[2]    , p[3]])],
+                        self._fy2i[self._index([ p[0]    , p[1]    , p[2]    , p[3]])],
+                        self._fy2i[self._index([ p[0]    , p[1] + w, p[2]    , p[3]])],
+                        self._fz2i[self._index([ p[0]    , p[1]    , p[2]    , p[3]])],
+                        self._fz2i[self._index([ p[0]    , p[1]    , p[2] + w, p[3]])]
+                    ]
+
+                for off, pm, face in zip(offset, PM, faces):
+                    I += [ii]
+                    J += [face + off]
+                    V += [pm]
+
             self.__faceDivStencilFull = sp.csr_matrix(
                 (V, (I, J)), shape=(self.nC, self.ntF)
             )
