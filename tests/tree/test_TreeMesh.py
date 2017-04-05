@@ -1,6 +1,7 @@
 from __future__ import print_function
-from SimPEG import Mesh, Tests
-from SimPEG.Mesh.TreeMesh import CellLookUpException
+import discretize as Mesh
+from discretize import Tests
+from discretize.TreeMesh import CellLookUpException
 import numpy as np
 import matplotlib.pyplot as plt
 import unittest
