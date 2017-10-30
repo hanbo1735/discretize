@@ -1,4 +1,4 @@
-sphinx
+sphinx==1.5.6
 sphinx_rtd_theme
 sphinx-gallery
 nose
@@ -12,5 +12,6 @@ cython
 pymatsolver>=0.1.2
 ipython
 matplotlib
-properties[math]
+properties[math]>=0.3.6b0
 wheel
+twine
