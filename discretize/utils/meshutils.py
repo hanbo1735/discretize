@@ -186,68 +186,77 @@ def ExtractCoreMesh(xyzlim, mesh, meshType='tensor'):
     Warning: 1D and 2D has not been tested
     """
     import discretize
-    if mesh.dim == 1:
-        xyzlim = xyzlim.flatten()
-        xmin, xmax = xyzlim[0], xyzlim[1]
 
-        xind = np.logical_and(mesh.vectorCCx > xmin, mesh.vectorCCx < xmax)
+    if meshType == 'tensor':
 
-        xc = mesh.vectorCCx[xind]
+        if mesh.dim == 1:
+            xyzlim = xyzlim.flatten()
+            xmin, xmax = xyzlim[0], xyzlim[1]
 
-        hx = mesh.hx[xind]
+            xind = np.logical_and(mesh.vectorCCx > xmin, mesh.vectorCCx < xmax)
 
-        x0 = [xc[0]-hx[0]*0.5, yc[0]-hy[0]*0.5]
+            xc = mesh.vectorCCx[xind]
 
-        meshCore = discretize.TensorMesh([hx, hy], x0=x0)
+            hx = mesh.hx[xind]
 
-        actind = (mesh.gridCC[:, 0] > xmin) & (mesh.gridCC[:, 0] < xmax)
+            x0 = [xc[0]-hx[0]*0.5, yc[0]-hy[0]*0.5]
 
-    elif mesh.dim == 2:
-        xmin, xmax = xyzlim[0, 0], xyzlim[0, 1]
-        ymin, ymax = xyzlim[1, 0], xyzlim[1, 1]
+            meshCore = discretize.TensorMesh([hx, hy], x0=x0)
 
-        yind = np.logical_and(mesh.vectorCCy > ymin, mesh.vectorCCy < ymax)
-        zind = np.logical_and(mesh.vectorCCz > zmin, mesh.vectorCCz < zmax)
+            actind = (mesh.gridCC[:, 0] > xmin) & (mesh.gridCC[:, 0] < xmax)
 
-        xc = mesh.vectorCCx[xind]
-        yc = mesh.vectorCCy[yind]
+        elif mesh.dim == 2:
+            xmin, xmax = xyzlim[0, 0], xyzlim[0, 1]
+            ymin, ymax = xyzlim[1, 0], xyzlim[1, 1]
 
-        hx = mesh.hx[xind]
-        hy = mesh.hy[yind]
+            yind = np.logical_and(mesh.vectorCCy > ymin, mesh.vectorCCy < ymax)
+            zind = np.logical_and(mesh.vectorCCz > zmin, mesh.vectorCCz < zmax)
 
-        x0 = [xc[0]-hx[0]*0.5, yc[0]-hy[0]*0.5]
+            xc = mesh.vectorCCx[xind]
+            yc = mesh.vectorCCy[yind]
 
-        meshCore = discretize.TensorMesh([hx, hy], x0=x0)
+            hx = mesh.hx[xind]
+            hy = mesh.hy[yind]
 
-        actind = (mesh.gridCC[:, 0] > xmin) & (mesh.gridCC[:, 0] < xmax) \
-               & (mesh.gridCC[:, 1] > ymin) & (mesh.gridCC[:, 1] < ymax) \
+            x0 = [xc[0]-hx[0]*0.5, yc[0]-hy[0]*0.5]
 
-    elif mesh.dim == 3:
-        xmin, xmax = xyzlim[0, 0], xyzlim[0, 1]
-        ymin, ymax = xyzlim[1, 0], xyzlim[1, 1]
-        zmin, zmax = xyzlim[2, 0], xyzlim[2, 1]
+            meshCore = discretize.TensorMesh([hx, hy], x0=x0)
 
-        xind = np.logical_and(mesh.vectorCCx > xmin, mesh.vectorCCx < xmax)
-        yind = np.logical_and(mesh.vectorCCy > ymin, mesh.vectorCCy < ymax)
-        zind = np.logical_and(mesh.vectorCCz > zmin, mesh.vectorCCz < zmax)
+            actind = (mesh.gridCC[:, 0] > xmin) & (mesh.gridCC[:, 0] < xmax) \
+                   & (mesh.gridCC[:, 1] > ymin) & (mesh.gridCC[:, 1] < ymax) \
 
-        xc = mesh.vectorCCx[xind]
-        yc = mesh.vectorCCy[yind]
-        zc = mesh.vectorCCz[zind]
+        elif mesh.dim == 3:
+            xmin, xmax = xyzlim[0, 0], xyzlim[0, 1]
+            ymin, ymax = xyzlim[1, 0], xyzlim[1, 1]
+            zmin, zmax = xyzlim[2, 0], xyzlim[2, 1]
 
-        hx = mesh.hx[xind]
-        hy = mesh.hy[yind]
-        hz = mesh.hz[zind]
+            xind = np.logical_and(mesh.vectorCCx > xmin, mesh.vectorCCx < xmax)
+            yind = np.logical_and(mesh.vectorCCy > ymin, mesh.vectorCCy < ymax)
+            zind = np.logical_and(mesh.vectorCCz > zmin, mesh.vectorCCz < zmax)
 
-        x0 = [xc[0]-hx[0]*0.5, yc[0]-hy[0]*0.5, zc[0]-hz[0]*0.5]
+            xc = mesh.vectorCCx[xind]
+            yc = mesh.vectorCCy[yind]
+            zc = mesh.vectorCCz[zind]
 
-        meshCore = discretize.TensorMesh([hx, hy, hz], x0=x0)
+            hx = mesh.hx[xind]
+            hy = mesh.hy[yind]
+            hz = mesh.hz[zind]
 
-        actind = (
-            (mesh.gridCC[:, 0] > xmin) & (mesh.gridCC[:, 0] < xmax) &
-            (mesh.gridCC[:, 1] > ymin) & (mesh.gridCC[:, 1] < ymax) &
-            (mesh.gridCC[:, 2] > zmin) & (mesh.gridCC[:, 2] < zmax)
-        )
+            x0 = [xc[0]-hx[0]*0.5, yc[0]-hy[0]*0.5, zc[0]-hz[0]*0.5]
+
+            meshCore = discretize.TensorMesh([hx, hy, hz], x0=x0)
+
+            actind = (
+                (mesh.gridCC[:, 0] > xmin) & (mesh.gridCC[:, 0] < xmax) &
+                (mesh.gridCC[:, 1] > ymin) & (mesh.gridCC[:, 1] < ymax) &
+                (mesh.gridCC[:, 2] > zmin) & (mesh.gridCC[:, 2] < zmax)
+            )
+
+        else:
+            raise Exception("Not implemented!")
+
+    elif meshType == 'tree':
+        raise Exception("Not implemented!")
 
     else:
         raise Exception("Not implemented!")
